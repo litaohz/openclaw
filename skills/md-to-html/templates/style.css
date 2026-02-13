@@ -1,4 +1,4 @@
-/* CSS for AI Today Daily Report - Light Purple Theme */
+/* CSS for AI Today Daily Report - Light Theme */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
 
 * {
@@ -17,7 +17,7 @@ body {
     position: relative;
 }
 
-/* Watermark - Content Protection */
+/* 水印样式 - Content Protection Watermark */
 body::after {
     content: "";
     position: fixed;
@@ -26,8 +26,16 @@ body::after {
     width: 200%;
     height: 200%;
     pointer-events: none;
+    /* 不影响页面交互 */
     z-index: 9999;
+    /* 最高层级，覆盖所有内容 */
+    background-image:
+        repeating-linear-gradient(-45deg,
+            transparent,
+            transparent 80px,
+            transparent 80px);
     background-size: 300px 150px;
+    /* 使用内联SVG创建水印文字，可通过修改fill-opacity调整透明度（建议范围: 0.05-0.08） */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='150'%3E%3Ctext x='50%25' y='50%25' font-family='Noto Sans SC, sans-serif' font-size='16' fill='%239333ea' fill-opacity='0.06' text-anchor='middle' dominant-baseline='middle' transform='rotate(-35, 150, 75)'%3E清华小禾说AI%3C/text%3E%3C/svg%3E");
     transform: translate(-25%, -25%);
 }
@@ -37,6 +45,17 @@ body::after {
     margin: 0 auto;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
+}
+
+/* Section styling for screenshots */
+.section {
+    padding: 40px 50px;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+.section:last-child {
+    border-bottom: none;
 }
 
 /* Header Section */
@@ -52,6 +71,14 @@ body::after {
     justify-content: center;
     gap: 16px;
     margin-bottom: 12px;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
 .main-title-inline {
@@ -76,6 +103,17 @@ body::after {
     color: #8b5cf6;
     font-weight: 400;
     margin-bottom: 30px;
+}
+
+.date-badge-row {
+    margin-bottom: 20px;
+}
+
+.date-badge {
+    display: inline-block;
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 400;
 }
 
 /* Creators Section in Header */
@@ -121,6 +159,62 @@ body::after {
     font-weight: 600;
 }
 
+/* Creator Info */
+.creator-label {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.creator-info {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 50px;
+    margin: 20px 0 30px;
+    flex-wrap: wrap;
+}
+
+.creator-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.creator-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.creator-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.creator-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #4c1d95;
+}
+
+.creator-platform {
+    font-size: 0.85rem;
+    color: #8b5cf6;
+    font-weight: 400;
+}
+
+.qr-code {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* Divider */
 .divider {
     height: 3px;
@@ -146,10 +240,22 @@ body::after {
     gap: 10px;
 }
 
+.section-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
 .overview-text {
     color: #6b7280;
     margin-bottom: 20px;
     font-size: 0.95rem;
+}
+
+.highlight {
+    color: #5b21b6;
+    font-weight: 600;
 }
 
 /* Overview Table */
@@ -194,6 +300,10 @@ body::after {
     font-weight: 600;
     color: #5b21b6;
     white-space: nowrap;
+}
+
+.topic-tag .company-icon {
+    margin-right: 6px;
 }
 
 /* Detail Cards */
@@ -258,6 +368,8 @@ body::after {
     color: #5b21b6;
 }
 
+
+
 .content-section {
     margin-bottom: 20px;
 }
@@ -288,15 +400,63 @@ body::after {
     font-weight: bold;
 }
 
-.content-list li strong {
+.content-list li strong,
+.content-list li .highlight {
     color: #5b21b6;
     font-weight: 600;
+}
+
+.nested-list {
+    margin-top: 8px;
+    padding-left: 20px;
+}
+
+.nested-list li {
+    font-size: 0.9rem;
+    padding: 4px 0 4px 20px;
+}
+
+.nested-list li::before {
+    content: "▸";
+    color: #a855f7;
+}
+
+/* Voice Options */
+.voice-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.voice-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #5b21b6;
+    font-weight: 500;
+}
+
+.voice-tag::before {
+    content: '🎙️';
+    font-size: 0.9rem;
 }
 
 /* Screenshots */
 .screenshots {
     margin-top: 25px;
     text-align: center;
+}
+
+.screenshot-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 12px;
+    font-weight: 500;
 }
 
 .screenshot-item {
@@ -311,7 +471,17 @@ body::after {
     border: 1px solid #e9d5ff;
 }
 
-/* Multi-screenshot layouts */
+.screenshot-placeholder {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 20px;
+    background: #faf5ff;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* 多张截图布局 - 2-3张并排 */
 .screenshots-grid-2,
 .screenshots-grid-3 {
     display: grid;
@@ -327,6 +497,7 @@ body::after {
     grid-template-columns: repeat(3, 1fr);
 }
 
+/* 多张截图布局 - 4张分两行 */
 .screenshots-grid-4 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -334,6 +505,7 @@ body::after {
     margin-top: 25px;
 }
 
+/* 在网格布局中，每个截图项目占满网格单元 */
 .screenshots-grid-2 .screenshot-item,
 .screenshots-grid-3 .screenshot-item,
 .screenshots-grid-4 .screenshot-item {
@@ -349,7 +521,7 @@ body::after {
     object-fit: cover;
 }
 
-/* Special layout: 1 large + 3 small */
+/* 特殊布局：左边1张大图，右边3张小图垂直排列 */
 .screenshots-layout-1-3 {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
@@ -393,6 +565,38 @@ body::after {
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
     border: 1px solid #e9d5ff;
+}
+
+
+/* Links */
+.paper-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #7c3aed;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%);
+    border-radius: 20px;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.paper-link:hover {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    transform: translateY(-2px);
+}
+
+/* Note */
+.note {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background: #faf5ff;
+    border-radius: 8px;
 }
 
 /* Footer */
@@ -465,6 +669,7 @@ body::after {
 .qr-item {
     width: 100%;
     max-width: 650px;
+    /* Reduced from 650px to make it slightly smaller */
     display: flex;
     justify-content: center;
 }
@@ -498,6 +703,8 @@ body::after {
 
 /* Responsive */
 @media (max-width: 768px) {
+
+    .section,
     .header,
     .overview-card,
     .detail-card,
@@ -509,10 +716,21 @@ body::after {
         font-size: 1.8rem;
     }
 
+    .logo {
+        width: 40px;
+        height: 40px;
+    }
+
     .detail-title {
         font-size: 1.2rem;
     }
 
+    .creator-info,
+    .qr-grid {
+        gap: 30px;
+    }
+
+    /* 移动端：多张截图改为单列布局 */
     .screenshots-grid-2,
     .screenshots-grid-3,
     .screenshots-grid-4,
@@ -520,6 +738,7 @@ body::after {
         grid-template-columns: 1fr;
     }
 
+    /* 移动端：左1右3布局的特殊处理 */
     .screenshots-layout-1-3 .screenshot-side .screenshot-item {
         flex: none;
     }

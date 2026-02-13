@@ -55,10 +55,21 @@ python scripts/tweet_screenshot.py "https://x.com/LangChain/status/789" long_twe
 
 Features:
 - Auto-crops to tweet content only (removes left nav, right sidebar, reply box)
-- **Dynamic height detection** - captures full tweet including preview cards
+- **Action bar detection** - uses `[role="group"][aria-label*="likes"]` to include engagement stats
+- **Quote tweet support** - correctly handles tweets with embedded quotes
 - Default max height: 1500px (pass 0 for unlimited)
-- Preserves full tweet text, images, embedded cards, and engagement stats
-- Excludes "Relevant" dropdown and "Post your reply" section
+- Preserves full tweet text, images, embedded cards, time, views, and interaction counts
+- Excludes "Post your reply" section
+
+### Technical Details
+
+The script uses viewport-relative coordinates (not full page) for accurate cropping:
+
+1. **Horizontal bounds**: article.x - 35px to article.x - 35px + 520px (captures full content width without sidebar)
+2. **Top bound**: article.y - 8px (small margin above avatar)
+3. **Bottom bound**: article.bottom - 100px (includes action bar, excludes "View quotes" and reply box)
+4. **Wait time**: 3.5s to allow translation plugins to complete
+5. **Final width**: Resized to 560px for consistent output
 
 ## General Screenshots
 

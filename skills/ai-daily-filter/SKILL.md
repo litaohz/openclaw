@@ -7,7 +7,21 @@ description: |
 
 # AI 日报推文筛选与排序
 
-## 判断优先级（按重要性排序）
+## 完整工作流
+
+```
+1. 筛选推文 → 本 skill
+2. 内容提取 → extract-from-x-url skill
+3. 截图 → playwright-screenshot skill
+4. 生成 HTML → md-to-html skill
+5. 上传 OSS → oss-image-uploader skill（可选）
+```
+
+---
+
+## 第一步：筛选逻辑
+
+### 判断优先级（按重要性排序）
 
 **第一优先级：发布者/公司**
 → OpenAI 的一句话 > 小公司的详细长文
@@ -18,11 +32,7 @@ description: |
 **第三优先级：同等条件下的加分项**
 → 正式发布 > 预览 | 附带视频 > 纯文字 | 首创 > 跟进
 
-⚠️ 综合判断，不要一刀切
-
----
-
-## 公司梯队
+### 公司梯队
 
 | 梯队 | 公司 |
 |------|------|
@@ -32,53 +42,72 @@ description: |
 | 第二偏后 | NVIDIA（芯片公司，模型优先级较低）|
 | 第三 | Cursor > Perplexity > Langchain = Mistral = Midjourney = HuggingFace |
 
----
-
-## 入选条件
+### 入选条件
 
 - 新模型/新产品/新功能发布
 - 新技术/重大突破
 - 重要行业数据
 - 真金白银的投资/并购
 - 头部大佬观点或公开访谈
-- 纯转发但内容本身有价值
 
-## 不入选条件
+### 不入选条件
 
 - 老新闻/前几天已写过
 - 私人互怼/与网友交锋
 - 纯社交互动
-- 看不出具体内容的幕后故事
 - 快速变动的排名截图
 - 中国公司（放中国板块）
 - 敏感政治内容
 
 ---
 
-## 弹性机制
+## 第二步：内容提取
 
-**消息少时放宽**：平时略过的边缘内容可补选
-**消息多时收紧**：只选最重要的
+**引用 skill**: [extract-from-x-url](../extract-from-x-url/SKILL.md)
+
+该 skill 包含：
+- 内容提取原则（推文即新闻）
+- Markdown 格式规范
+- 时间处理规则
+- 示例输出
 
 ---
 
-## 工作流程
+## 第三步：截图
 
-1. **先筛选**：确定最终 ≤10 条入选
-   - 同一事件合并：不同公司视角均保留链接；同公司低职位仅在有增量信息时保留
-2. **链接补全**（仅对入选推文）
-   - **外部链接**：推文附带的官网/博客/GitHub 链接要一起附上
-   - **线程补全**：同一账号在同线程下的相关推文链接也要收集
+**引用 skill**: [playwright-screenshot](../playwright-screenshot/SKILL.md)
 
 ```bash
-& "C:\Users\taoli1\openclaw\skills\playwright-screenshot\scripts\ensure-edge.ps1"
-python scripts/get_tweet_links.py "https://x.com/账号/status/xxx"
-python scripts/resolve_url.py "https://t.co/xxx"
+python tweet_screenshot.py "https://x.com/xxx" "output.png"
 ```
 
 ---
 
-## 详细参考
+## 输出文件路径规则
 
-- 判断原则详解：[references/principles.md](references/principles.md)
-- 具体案例：[references/examples.md](references/examples.md)
+**目录结构：**
+```
+ai-news/
+├── raw/                    # 原始筛选结果
+├── processed/              # 最终 markdown
+├── screenshots/YYYY-MM-DD/ # 截图
+└── processed/output/       # HTML 输出
+```
+
+**图片路径：**
+- `processed/xxx.md` 引用截图：`../screenshots/YYYY-MM-DD/xx.png`
+- `processed/output/xxx.html` 引用截图：`../../screenshots/YYYY-MM-DD/xx.png`
+
+---
+
+## 弹性机制
+
+**消息少时放宽**：边缘内容可补选
+**消息多时收紧**：只选最重要的
+
+---
+
+## 参考文档
+
+- 筛选原则详解：[references/principles.md](references/principles.md)
+- 筛选案例：[references/examples.md](references/examples.md)

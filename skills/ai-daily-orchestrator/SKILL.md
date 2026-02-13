@@ -1,116 +1,137 @@
+---
+name: ai-daily-orchestrator
+description: AI 日报完整工作流编排。从飞书文档到小程序上线的一条龙流程。触发词：日报流程、orchestrator、完整流程、一条龙。
+---
+
 # AI Daily Orchestrator
 
-一条龙编排 AI 日报发布流程。
+AI 日报完整发布流程编排。
 
-## 完整流程
+## 完整 Pipeline
 
 ```
-原始 Markdown → 截图采集 → AI 总结 → HTML + JSON 发布
-     ↓              ↓           ↓            ↓
-  urls.txt     screenshots/   final.md    output/
+┌─────────────────────────────────────────────────────────────┐
+│  Phase 1: 素材准备                                           │
+├─────────────────────────────────────────────────────────────┤
+│  飞书文档 (推文链接)                                          │
+│      ↓                                                      │
+│  ai-daily-filter (筛选排序)                                  │
+│      ↓ 输出：优先级排序后的 URL 列表                           │
+│  extract-from-x-url (内容提取)                               │
+│      ↓ 输出：processed/YYYY-MM-DD.md                        │
+├─────────────────────────────────────────────────────────────┤
+│  Phase 2: 截图采集                                           │
+├─────────────────────────────────────────────────────────────┤
+│  playwright-screenshot (推文截图)                            │
+│      ↓ 输出：screenshots/YYYY-MM-DD/*.png                   │
+├─────────────────────────────────────────────────────────────┤
+│  Phase 3: 发布 (ai-daily-publish)                           │
+├─────────────────────────────────────────────────────────────┤
+│  md-to-html (HTML 生成)                                     │
+│      ↓ 输出：processed/output/ai_posts_summary_YYYY-MM-DD.html│
+│                                                             │
+│  ⏸️ 确认门禁 ← 暂停等待用户说"发射"                            │
+│                                                             │
+│  ai-daily-upload (OSS 上传)                                 │
+│      ↓ PNG→WebP 转换，上传到阿里云                            │
+│  ai-daily-upload (小程序同步)                                │
+│      ↓ 同步到微信云数据库                                     │
+│                                                             │
+│  ✅ Go Production!                                          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 快速使用
+## Skills 职责表
 
-```bash
-# 完整流程（从原始 Markdown 开始）
-python scripts/orchestrate.py full --input raw_news.md --date 2026-02-08
-
-# 只截图（从 URL 列表）
-python scripts/orchestrate.py screenshot --input urls.txt --output screenshots/
-
-# 只总结（从原始 MD + 截图生成结构化 MD）
-python scripts/orchestrate.py summarize --input raw_news.md --screenshots screenshots/
-
-# 只发布（从结构化 MD 生成 HTML + JSON）
-python scripts/orchestrate.py publish --input final.md --screenshots screenshots/final/
-```
-
-## 子命令说明
-
-### `full` - 完整流程
-从原始 Markdown 一路处理到最终发布。
-
-**参数:**
-- `--input`: 原始 Markdown 文件（包含 Twitter URL）
-- `--date`: 日期 (YYYY-MM-DD)，默认今天
-- `--output-dir`: 输出目录，默认 `./output`
-- `--skip-screenshot`: 跳过截图步骤（如果已有截图）
-- `--skip-summarize`: 跳过总结步骤（如果已有结构化 MD）
-
-### `screenshot` - 截图采集
-使用 `playwright-screenshot` skill 采集 Twitter 截图。
-
-**参数:**
-- `--input`: Markdown 文件或 URL 列表
-- `--output`: 截图输出目录
-- `--format`: 图片格式 (png/webp)，默认 png
-
-### `summarize` - AI 总结
-使用 AI 将原始新闻总结为结构化 Markdown。
-
-**参数:**
-- `--input`: 原始 Markdown
-- `--screenshots`: 截图目录
-- `--output`: 输出的结构化 Markdown
-
-### `publish` - 发布
-使用 `ai-daily-publish` skill 生成 HTML + JSON。
-
-**参数:**
-- `--input`: 结构化 Markdown
-- `--screenshots`: 截图目录
-- `--output-dir`: 输出目录
-- `--expires`: 签名 URL 有效期（小时），默认 6
-- `--skip-existing`: 跳过已存在的 OSS 文件
-- `--no-json`: 不生成 JSON
-
-## 依赖的 Skills
-
-| Skill | 用途 |
-|-------|------|
-| `playwright-screenshot` | Twitter 截图 |
-| `ai-news-digest` | 新闻总结（可选，也可手动） |
-| `oss-image-uploader` | OSS 上传 |
-| `ai-daily-publish` | HTML + JSON 生成 |
+| 阶段 | Skill | 输入 | 输出 |
+|------|-------|------|------|
+| 筛选 | `ai-daily-filter` | 飞书文档/URL 列表 | 优先级排序后的 URL |
+| 提取 | `extract-from-x-url` | URL 列表 | `processed/YYYY-MM-DD.md` |
+| 截图 | `playwright-screenshot` | 推文 URL | `screenshots/YYYY-MM-DD/*.png` |
+| HTML | `md-to-html` | Markdown | `processed/output/*.html` |
+| 上传 | `ai-daily-upload` | HTML + 截图 | OSS + 云数据库 |
 
 ## 目录结构
 
 ```
 workspace/ai-news/
-├── raw/                    # 原始输入
-│   └── 2026-02-08.md
-├── screenshots/            # 截图
-│   ├── raw/               # 原始截图
-│   └── final/             # 处理后的截图
-├── processed/              # 结构化 Markdown
-│   └── 硅谷AI圈动态-2026-02-08.md
-└── output/                 # 最终输出
-    ├── ai_posts_summary_2026-02-08.html
-    ├── 2026-02-08.json
-    └── style.css
+├── processed/                    # Markdown 输出
+│   ├── YYYY-MM-DD.md            # 结构化摘要
+│   └── output/                  # HTML 输出
+│       ├── ai_posts_summary_YYYY-MM-DD.html
+│       └── style.css
+├── screenshots/                  # 截图
+│   └── YYYY-MM-DD/
+│       ├── 01-xxx.png
+│       └── 02-xxx.png
+└── assets/                       # 静态资源
+    └── 小禾说AI logo.png
 ```
 
-## 配置
+## 执行命令
 
-创建 `config.yaml` 自定义行为：
-
-```yaml
-# 默认设置
-defaults:
-  date_format: "%Y-%m-%d"
-  screenshot_format: png
-  oss_expires_hours: 6
-
-# 路径模板
-paths:
-  raw: "raw/{date}.md"
-  screenshots: "screenshots/{date}"
-  processed: "processed/硅谷AI圈动态-{date}.md"
-  output: "output"
-
-# 总结 prompt（AI 总结用）
-summarize:
-  model: "claude-sonnet-4"
-  prompt_file: "prompts/summarize.txt"
+### Phase 1: 筛选 + 提取
 ```
+用户提供飞书文档 → ai-daily-filter 筛选 → extract-from-x-url 提取
+```
+
+### Phase 2: 截图
+```powershell
+# 使用 playwright-screenshot skill
+# 详见 skills/playwright-screenshot/SKILL.md
+```
+
+### Phase 3: 发布
+```powershell
+# Step 1: 生成 HTML (md-to-html skill)
+
+# ⏸️ 等待用户确认
+
+# Step 2: 上传 OSS
+cd C:\Users\taoli1\ai-daily-uploader
+uv run python upload_openclaw.py YYYY-MM-DD
+
+# Step 3: 同步小程序
+node v3/pipeline.js YYYYMMDD
+```
+
+## 关键规则
+
+### 日期规则 ⚠️
+- **日报日期 = 发布当天日期**
+- 例如：2月12日发布的日报，标题写 `2026/02/12`
+- 文件名：`2026-02-12.md`、`ai_posts_summary_2026-02-12.html`
+- 截图目录：`screenshots/2026-02-12/`
+
+### 确认门禁
+- **HTML 生成后必须暂停**
+- 等待用户说"发射"、"go"、"确认"后才执行上传
+- 这是 go production，必须人工确认
+
+### 总览开场语规范
+- 必须是**高层概括**（如："头部公司密集发布产品更新"）
+- **禁止**罗列具体产品名（如："OpenAI连续发力，Deep Research升级..."）
+- 详见 `extract-from-x-url/SKILL.md`
+
+### 截图规范
+- 宽度：560px
+- 包含完整 action bar（回复/转发/点赞数）
+- 等待 3.5s 让翻译插件完成
+- 详见 `playwright-screenshot/SKILL.md`
+
+## 生产环境输出
+
+| 目标 | URL |
+|------|-----|
+| OSS 截图 | `https://ai-daily.oss-cn-beijing.aliyuncs.com/screenshots/YYYY-MM-DD/*.webp` |
+| OSS JSON | `https://ai-daily.oss-cn-beijing.aliyuncs.com/daily_reports/YYYY-MM-DD.json` |
+| 小程序 | 微信云数据库 `daily_reports/YYYY-MM-DD` |
+
+## 快捷触发
+
+用户可以说：
+- "帮我做今天的日报"（完整流程）
+- "筛选这些推文"（Phase 1）
+- "截图这些链接"（Phase 2）
+- "发布日报"（Phase 3）
+- "发射"（确认后继续上传）
