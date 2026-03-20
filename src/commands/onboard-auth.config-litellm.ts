@@ -28,20 +28,39 @@ type LiteLLMModelInfoResponse = {
 };
 
 /**
+ * Strip a trailing `/v1` suffix from a base URL so callers can safely
+ * append `/v1/model/info` without producing `/v1/v1/model/info`.
+ */
+function stripV1Suffix(url: string): string {
+  const trimmed = url.replace(/\/+$/, "");
+  return trimmed.endsWith("/v1") ? trimmed.slice(0, -3) : trimmed;
+}
+
+/**
  * Query LiteLLM /v1/model/info to get actual context window and max output
  * tokens for a specific model. Falls back to defaults on any failure.
+ *
+ * @param baseUrl - LiteLLM proxy base URL (with or without trailing /v1)
+ * @param modelId - model name to look up
+ * @param apiKey - optional API key for authenticated proxies
  */
 export async function fetchLitellmModelInfo(
   baseUrl: string,
   modelId: string,
+  apiKey?: string,
 ): Promise<{ contextWindow: number; maxTokens: number }> {
   const defaults = {
     contextWindow: LITELLM_DEFAULT_CONTEXT_WINDOW,
     maxTokens: LITELLM_DEFAULT_MAX_TOKENS,
   };
   try {
-    const url = `${baseUrl.replace(/\/+$/, "")}/v1/model/info`;
+    const url = `${stripV1Suffix(baseUrl)}/v1/model/info`;
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+    }
     const response = await fetch(url, {
+      headers,
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) {
