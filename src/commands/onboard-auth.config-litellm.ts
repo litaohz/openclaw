@@ -28,6 +28,14 @@ type LiteLLMModelInfoResponse = {
   }>;
 };
 
+/** Result from probing the LiteLLM /v1/model/info endpoint. */
+export type LiteLLMModelInfoResult = {
+  contextWindow: number;
+  maxTokens: number;
+  /** True when the values came from the proxy; false when using fallback defaults. */
+  discovered: boolean;
+};
+
 /**
  * Strip a trailing `/v1` suffix from a base URL so callers can safely
  * append `/v1/model/info` without producing `/v1/v1/model/info`.
@@ -49,10 +57,11 @@ export async function fetchLitellmModelInfo(
   baseUrl: string,
   modelId: string,
   apiKey?: string,
-): Promise<{ contextWindow: number; maxTokens: number }> {
-  const defaults = {
+): Promise<LiteLLMModelInfoResult> {
+  const defaults: LiteLLMModelInfoResult = {
     contextWindow: LITELLM_DEFAULT_CONTEXT_WINDOW,
     maxTokens: LITELLM_DEFAULT_MAX_TOKENS,
+    discovered: false,
   };
   try {
     const url = `${stripV1Suffix(baseUrl)}/v1/model/info`;
@@ -83,6 +92,7 @@ export async function fetchLitellmModelInfo(
             : defaults.contextWindow,
         maxTokens:
           typeof info.max_output_tokens === "number" ? info.max_output_tokens : defaults.maxTokens,
+        discovered: true,
       };
     }
   } catch {
@@ -159,7 +169,7 @@ function patchExistingModelLimits(
 
 export function applyLitellmProviderConfig(
   cfg: OpenClawConfig,
-  modelInfoOverrides?: { contextWindow?: number; maxTokens?: number },
+  modelInfo?: LiteLLMModelInfoResult,
 ): OpenClawConfig {
   const models = { ...cfg.agents?.defaults?.models };
   models[LITELLM_DEFAULT_MODEL_REF] = {
@@ -167,7 +177,7 @@ export function applyLitellmProviderConfig(
     alias: models[LITELLM_DEFAULT_MODEL_REF]?.alias ?? "LiteLLM",
   };
 
-  const defaultModel = buildLitellmModelDefinition(modelInfoOverrides);
+  const defaultModel = buildLitellmModelDefinition(modelInfo);
 
   const existingProvider = cfg.models?.providers?.litellm as { baseUrl?: unknown } | undefined;
   const resolvedBaseUrl =
@@ -182,13 +192,14 @@ export function applyLitellmProviderConfig(
     defaultModelId: LITELLM_DEFAULT_MODEL_ID,
   });
 
-  // When the model already existed in a previous config, the merge helper
-  // keeps the old entry unchanged. Patch contextWindow/maxTokens so re-auth
-  // picks up newly discovered limits (e.g. 128k → 1M after upgrading model).
-  if (modelInfoOverrides) {
+  // Only patch existing model entries when the probe actually discovered real
+  // values from the proxy. When the probe falls back to defaults (proxy down,
+  // 401, model not found), skip the patch to preserve any previously discovered
+  // limits already stored in the config.
+  if (modelInfo?.discovered) {
     next = patchExistingModelLimits(next, "litellm", LITELLM_DEFAULT_MODEL_ID, {
-      contextWindow: modelInfoOverrides.contextWindow ?? LITELLM_DEFAULT_CONTEXT_WINDOW,
-      maxTokens: modelInfoOverrides.maxTokens ?? LITELLM_DEFAULT_MAX_TOKENS,
+      contextWindow: modelInfo.contextWindow,
+      maxTokens: modelInfo.maxTokens,
     });
   }
 
@@ -197,8 +208,8 @@ export function applyLitellmProviderConfig(
 
 export function applyLitellmConfig(
   cfg: OpenClawConfig,
-  modelInfoOverrides?: { contextWindow?: number; maxTokens?: number },
+  modelInfo?: LiteLLMModelInfoResult,
 ): OpenClawConfig {
-  const next = applyLitellmProviderConfig(cfg, modelInfoOverrides);
+  const next = applyLitellmProviderConfig(cfg, modelInfo);
   return applyAgentDefaultModelPrimary(next, LITELLM_DEFAULT_MODEL_REF);
 }

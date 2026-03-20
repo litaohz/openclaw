@@ -63,10 +63,12 @@ export async function applyLiteLlmApiKeyProvider({
   }
 
   // Track the resolved plaintext API key for the model info probe.
-  // ensureApiKeyFromOptionEnvOrPrompt always returns plaintext even in ref mode.
   let resolvedApiKey: string | undefined;
 
   if (!hasCredential) {
+    // ensureApiKeyFromOptionEnvOrPrompt always returns the plaintext key,
+    // even in --secret-input-mode=ref (the ref is passed to setCredential,
+    // but the return value is the resolved plaintext).
     resolvedApiKey = await ensureApiKeyFromOptionEnvOrPrompt({
       token: params.opts?.token,
       tokenProvider: normalizedTokenProvider,
@@ -86,9 +88,17 @@ export async function applyLiteLlmApiKeyProvider({
       noteTitle: "LiteLLM",
     });
     hasCredential = true;
+  } else if (existingCred?.type === "api_key") {
+    // Reusing a previously stored credential — try to read the plaintext key
+    // so the model info probe can authenticate on secured proxies.
+    const storedKey = (existingCred as { key?: unknown }).key;
+    if (typeof storedKey === "string") {
+      resolvedApiKey = storedKey;
+    }
   }
 
-  // Fall back to the LITELLM_API_KEY env var when reusing an existing credential.
+  // Fall back to the LITELLM_API_KEY env var when no plaintext key is available
+  // (e.g. ref-backed profiles where the stored key is a SecretRef object).
   if (!resolvedApiKey) {
     resolvedApiKey = process.env.LITELLM_API_KEY ?? undefined;
   }
