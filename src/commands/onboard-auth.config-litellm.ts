@@ -49,18 +49,20 @@ export async function fetchLitellmModelInfo(
     }
     const data = (await response.json()) as LiteLLMModelInfoResponse;
     for (const entry of data.data ?? []) {
-      if (entry.model_name !== modelId) continue;
+      if (entry.model_name !== modelId) {
+        continue;
+      }
       const info = entry.model_info;
-      if (!info) continue;
+      if (!info) {
+        continue;
+      }
       return {
         contextWindow:
           typeof info.max_input_tokens === "number"
             ? info.max_input_tokens
             : defaults.contextWindow,
         maxTokens:
-          typeof info.max_output_tokens === "number"
-            ? info.max_output_tokens
-            : defaults.maxTokens,
+          typeof info.max_output_tokens === "number" ? info.max_output_tokens : defaults.maxTokens,
       };
     }
   } catch {
@@ -69,10 +71,7 @@ export async function fetchLitellmModelInfo(
   return defaults;
 }
 
-function buildLitellmModelDefinition(overrides?: {
-  contextWindow?: number;
-  maxTokens?: number;
-}): {
+function buildLitellmModelDefinition(overrides?: { contextWindow?: number; maxTokens?: number }): {
   id: string;
   name: string;
   reasoning: boolean;

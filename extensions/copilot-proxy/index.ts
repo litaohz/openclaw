@@ -89,7 +89,9 @@ async function fetchModelInfoMap(
     for (const entry of data.data ?? []) {
       const name = entry.model_name;
       const info = entry.model_info;
-      if (!name || !info) continue;
+      if (!name || !info) {
+        continue;
+      }
 
       const contextWindow = info.max_input_tokens;
       const maxTokens = info.max_output_tokens;
@@ -182,11 +184,7 @@ export default definePluginEntry({
                       authHeader: false,
                       models: modelIds.map((modelId) => {
                         const info = modelInfoMap.get(modelId);
-                        return buildModelDefinition(
-                          modelId,
-                          info?.contextWindow,
-                          info?.maxTokens,
-                        );
+                        return buildModelDefinition(modelId, info?.contextWindow, info?.maxTokens);
                       }),
                     },
                   },
